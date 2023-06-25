@@ -14,5 +14,93 @@ os.listdir()
 
 # Data
 data = pd.read_csv("mrw.csv")
-data = data.dropna(axis=0).reset_index()
-data["GDP_diff"] = np.log(data["rgdpw85"]) - np.log(data["rgdpw60"])
+data = data.dropna(axis=0)
+cols = data.columns[1:]
+data = data[cols]
+data.reset_index(inplace=True, drop=True)
+# data = data.drop("index", axis=1)
+
+# Variable Transformation/Addition
+data["rgdpw60"] = np.log(data["rgdpw60"])
+data["rgdpw85"] = np.log(data["rgdpw85"])
+data["gdpgrowth"] = data["gdpgrowth"] / 100
+data["GDP_diff"] = data["rgdpw85"] - data["rgdpw60"] # growth over period 1960-1985
+data["g+n"] = 0.05 # g+n is assumed to be 0.05 (p.7)
+data["BE_Inv"] = np.log(data["popgrowth"]/100 + data["g+n"])
+data["i_y"] = np.log(data["i_y"]/100)
+data["school"] = np.log(data["school"]/100)
+data["diff_i_y"] = data["i_y"] - data["BE_Inv"] # its weird that this is always negative...
+data["diff_school"] = data["school"] - data["BE_Inv"]
+data["const"] = 1
+
+data["africa"] = 0
+data.loc[0:39, "africa"] = 1
+
+
+# Regression Non-Oil Countries
+reg_data_n = data.loc[data.n == 1]
+
+X = reg_data_n[["const", "rgdpw60", "diff_i_y", "diff_school"]]
+y = reg_data_n["GDP_diff"]
+
+model_n = sm.OLS(y, X)
+results_n = model_n.fit()
+print(results_n.summary())
+
+# Regression Intermediate Countries
+reg_data_i = data.loc[data.i == 1]
+
+X = reg_data_i[["const", "rgdpw60", "diff_i_y", "diff_school"]]
+y = reg_data_i["GDP_diff"]
+
+model_i = sm.OLS(y, X)
+results_i = model_i.fit()
+print(results_i.summary())
+
+# Regression OECD Countries
+reg_data_o = data.loc[data.o == 1]
+
+X = reg_data_o[["const", "rgdpw60", "diff_i_y", "diff_school"]]
+y = reg_data_o["GDP_diff"]
+
+model_o = sm.OLS(y, X)
+results_o = model_o.fit()
+print(results_o.summary())
+
+
+# Regression African Countries
+reg_data_africa = data.loc[data.africa == 1] 
+
+X = reg_data_africa[["const", "rgdpw60", "diff_i_y", "diff_school"]]
+y = reg_data_africa["GDP_diff"]  
+
+model_africa = sm.OLS(y, X)
+results_africa = model_africa.fit()
+print(results_africa.summary())
+
+# Interaction Africa * Human Capital
+data["inter_a_h"] = data["africa"] * data["diff_school"]
+X = data[["const", "rgdpw60", "diff_i_y", "diff_school", "inter_a_h"]]
+y = data["GDP_diff"]
+
+model_inter = sm.OLS(y, X)
+results_inter = model_inter.fit()
+print(results_inter.summary())
+
+
+# Interaction Africa * GDP 1960
+data["inter_a_rgdpw60"] = data["africa"] * data["rgdpw60"]
+
+X = data[["const", "rgdpw60", "diff_i_y", "diff_school", "inter_a_rgdpw60"]]
+y = data["GDP_diff"]
+
+model_inter = sm.OLS(y, X)
+results_inter = model_inter.fit()
+print(results_inter.summary())
+
+#%% Playing around
+for col in data.columns:
+    if "gdp" in col:
+        print(col + " Yes")
+    else:
+        print(col + " No")

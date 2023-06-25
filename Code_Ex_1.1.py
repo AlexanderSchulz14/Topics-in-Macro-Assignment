@@ -44,6 +44,8 @@ s = pd.read_csv("PWT_InvShare.csv",
                 header=0,
                 parse_dates=["Year"])
 
+s["Inv_Share"] = np.log(s["Inv_Share"])
+
 # Sort
 s.sort_values(by=["Country", "Year"],
               inplace=True,
@@ -272,7 +274,7 @@ level_gdp = list(gdp_p1.loc[gdp_p1.Country == country].RGDP)
 
 
 
-gdp.groupby("Country").RGDP.diff()
+# gdp.groupby("Country").RGDP.diff()
 
 
 

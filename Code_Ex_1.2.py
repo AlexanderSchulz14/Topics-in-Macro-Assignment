@@ -159,6 +159,7 @@ for country in countries:
 # Get DF avg. Inv. Share Period 1
 df_s_avg_p1 = pd.DataFrame.from_dict(s_avg_p1,orient="index").dropna()
 df_s_avg_p1.rename(columns={0:"Inv_Share"}, inplace=True)
+df_s_avg_p1["Inv_Share"] = np.log(df_s_avg_p1["Inv_Share"])
 
 # Get avg. Inv. Share Period 2
 # s_p2 = s.loc[s.Year.isin(period2)]
@@ -170,6 +171,7 @@ for country in countries:
 # Get DF avg. Inv. Share Period 2
 df_s_avg_p2 = pd.DataFrame.from_dict(s_avg_p2,orient="index").dropna()
 df_s_avg_p2.rename(columns={0:"Inv_Share"}, inplace=True)
+df_s_avg_p2["Inv_Share"] = np.log(df_s_avg_p2["Inv_Share"])
 
 # Get Join unconditional beta convergence
 df_p1 = df_gr_p1.join(df_level_p1)
