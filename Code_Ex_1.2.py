@@ -19,8 +19,6 @@ gdp = pd.read_csv("PWT_RGDP.csv",
                   header=0,
                   parse_dates=["Year"])
 
-gdp["RGDP"] = np.log(gdp["RGDP"])
-
 # Sort
 gdp = gdp.sort_values(by=["Country", "Year"])
 gdp = gdp.reset_index(drop=True)
@@ -37,6 +35,7 @@ pop.sort_values(by=["Country", "Year"],
                       inplace=True,
                       ignore_index=True)
 
+
 # Investment Share
 s = pd.read_csv("PWT_InvShare.csv",
                 usecols=[1, 2, 3],
@@ -44,10 +43,21 @@ s = pd.read_csv("PWT_InvShare.csv",
                 header=0,
                 parse_dates=["Year"])
 
+# s["Inv_Share"] = np.log(s["Inv_Share"])
+
 # Sort
 s.sort_values(by=["Country", "Year"],
               inplace=True,
               ignore_index=True)
+
+# Merge Data
+data_full = gdp.merge(pop, on=["Country", "Year"])
+data_full = data_full.merge(s, on=["Country", "Year"])
+
+# Transformation and Addition of Variables
+data_full["RGDPpc"] = data_full["RGDP"] / data_full["Population"]
+data_full["RGDPpc"] = np.log(data_full["RGDPpc"])
+
 
 # Get Periods for filtering by Period
 period1 = pd.date_range(start="1/1/1960", end="1/1/1990", freq="YS")
@@ -55,16 +65,16 @@ period2 = pd.date_range(start="1/1/1990", end="1/1/2019", freq="YS")
 
 # Get Countries for loop 
 # (use only countries that have data available from 1960 onwards)
-countries = gdp.Country.unique()
-# countries_p1 = gdp.loc[gdp.Year == "1960"].Country.unique()
+countries = data_full.Country.unique()
+# countries = data_full.loc[data_full.Year == "1960"].Country.unique()
 # countries_p2 = gdp.loc[gdp.Year == "1990"].Country.unique()
 
 # Get GDP Growth Rates for Period 1 (1960-1990)    
-gdp_p1 = gdp.loc[gdp.Year.isin(period1)]
+data_full_p1 = data_full.loc[data_full.Year.isin(period1)]
 red_gdp1 = {}
 for country in countries:
     #print(country),
-    red_gdp1[country] = gdp_p1.loc[(gdp_p1.Country == country)].RGDP.diff().mean()
+    red_gdp1[country] = data_full_p1.loc[(data_full_p1.Country == country)].RGDPpc.diff().mean()
 
 min(red_gdp1.items(), key=lambda x: x[1])
 max(red_gdp1.items(), key=lambda x: x[1])
@@ -77,7 +87,7 @@ df_gr_p1 = df_gr_p1.rename(columns={0:"GDP_GR"})
 level_gpd_p1 = {}
 for country in countries:
     try:
-        gdp_level = gdp_p1.loc[gdp_p1.Country == country].RGDP.values
+        gdp_level = data_full_p1.loc[data_full_p1.Country == country].RGDPpc.values
         gdp_level_init = gdp_level[0]
         level_gpd_p1[country] = gdp_level_init
     except:
@@ -89,11 +99,11 @@ df_level_p1 = df_level_p1.rename(columns={0:"GDP_Level"})
 
 
 # Get GDP Growth Rates for Period 2 (1960-1990)
-gdp_p2 = gdp.loc[gdp.Year.isin(period2)]
+data_full_p2 = data_full.loc[data_full.Year.isin(period2)]
 red_gdp2 = {}
 for country in countries:
     #print(country),
-    red_gdp2[country] = gdp_p2.loc[(gdp_p2.Country == country)].RGDP.diff().mean()
+    red_gdp2[country] = data_full_p2.loc[(data_full_p2.Country == country)].RGDPpc.diff().mean()
 
 min(red_gdp2.items(), key=lambda x: x[1])
 max(red_gdp2.items(), key=lambda x: x[1])
@@ -106,7 +116,7 @@ df_gr_p2 = df_gr_p2.rename(columns={0:"GDP_GR"})
 level_gpd_p2 = {}
 for country in countries:
     try:
-        gdp_level = gdp_p2.loc[gdp_p2.Country == country].RGDP.values
+        gdp_level = data_full_p2.loc[data_full_p2.Country == country].RGDPpc.values
         gdp_level_init = gdp_level[0]
         level_gpd_p2[country] = gdp_level_init
     except:
@@ -117,22 +127,22 @@ df_level_p2 = df_level_p2.rename(columns={0:"GDP_Level"})
 
 
 # Get Population Growth for Period 1
-pop_p1 = pop.loc[pop.Year.isin(period1)]
+# pop_p1 = pop.loc[pop.Year.isin(period1)]
 pop_growth_p1 = {}
 
 for country in countries:
-    pop_growth_p1[country] = pop_p1.loc[pop_p1.Country == country].Population.pct_change().mean()
+    pop_growth_p1[country] = data_full_p1.loc[data_full_p1.Country == country].Population.pct_change().mean()
 
 # Get DF Pop. Growth Period 1
 df_pop_gr_p1 = pd.DataFrame.from_dict(pop_growth_p1, orient="index").dropna()
 df_pop_gr_p1.rename(columns={0:"Pop_Growth"}, inplace=True)
 
 # Get Population Growth for Period 2
-pop_p2 = pop.loc[pop.Year.isin(period2)]
+# pop_p2 = pop.loc[pop.Year.isin(period2)]
 pop_growth_p2 = {}
 
 for country in countries:
-    pop_growth_p2[country] = pop_p2.loc[pop_p2.Country == country].Population.pct_change().mean()
+    pop_growth_p2[country] = data_full_p2.loc[data_full_p2.Country == country].Population.pct_change().mean()
 
 # Get DF Pop. Growth Period 2
 df_pop_gr_p2 = pd.DataFrame.from_dict(pop_growth_p2, orient="index").dropna()
@@ -140,22 +150,22 @@ df_pop_gr_p2.rename(columns={0:"Pop_Growth"}, inplace=True)
 
 
 # Get avg. Inv. Share Period 1
-s_p1 = s.loc[s.Year.isin(period1)]
+# s_p1 = s.loc[s.Year.isin(period1)]
 s_avg_p1 = {}
 
 for country in countries:
-    s_avg_p1[country] = s_p1.loc[s_p1.Country == country].Inv_Share.mean()
+    s_avg_p1[country] = data_full_p1.loc[data_full_p1.Country == country].Inv_Share.mean()
 
 # Get DF avg. Inv. Share Period 1
 df_s_avg_p1 = pd.DataFrame.from_dict(s_avg_p1,orient="index").dropna()
 df_s_avg_p1.rename(columns={0:"Inv_Share"}, inplace=True)
 
 # Get avg. Inv. Share Period 2
-s_p2 = s.loc[s.Year.isin(period2)]
+# s_p2 = s.loc[s.Year.isin(period2)]
 s_avg_p2 = {}
 
 for country in countries:
-    s_avg_p2[country] = s_p2.loc[s_p2.Country == country].Inv_Share.mean()
+    s_avg_p2[country] = data_full_p2.loc[data_full_p2.Country == country].Inv_Share.mean()
 
 # Get DF avg. Inv. Share Period 2
 df_s_avg_p2 = pd.DataFrame.from_dict(s_avg_p2,orient="index").dropna()
@@ -253,26 +263,9 @@ gdp.loc[gdp.Country == "ABW"].RGDP.diff().mean()
 gdp.loc[gdp.Country == "ABW"].RGDP.pct_change().mean()
 
 
-gdp.loc[gdp.Country == "ABW"].RGDP.values
-
-gdp_p1.loc[gdp_p1.Country == "AUT"]
-
-gdp.loc[gdp.Year.isin(period1)]
-
-red_gdp = {}
-for country in countries:
-    # print(country),
-    red_gdp[country] = gdp_p2.loc[gdp_p2.Country == country].RGDP.diff().mean()
-
-min(red_gdp2.items(), key=lambda x: x[1])
-max(red_gdp2.items(), key=lambda x: x[1])
-
-level_gdp = list(gdp_p1.loc[gdp_p1.Country == country].RGDP)
 
 
-
-
-gdp.groupby("Country").RGDP.diff()
+# gdp.groupby("Country").RGDP.diff()
 
 
 
