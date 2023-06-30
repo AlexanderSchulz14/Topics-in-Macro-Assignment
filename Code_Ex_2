@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 sns.set_style("darkgrid")
 import statsmodels.api as sm
+from stargazer.stargazer import Stargazer
 
 # WD
 wd = r"C:\Users\alexa\Documents\Studium\MSc (WU)\Topics in Macroeconomic Theory and Policy\Assignment\Topics-in-Macro-Assignment"
@@ -78,14 +79,18 @@ model_africa = sm.OLS(y, X)
 results_africa = model_africa.fit()
 print(results_africa.summary())
 
+# Latex Render (Non-Oil, Intermediate, OECD)
+stargazer = Stargazer([results_n, results_i, results_o])
+print(stargazer.render_latex())
+
 # Interaction Africa * Human Capital
 data["inter_a_h"] = data["africa"] * data["diff_school"]
 X = data[["const", "rgdpw60", "diff_i_y", "diff_school", "inter_a_h"]]
 y = data["GDP_diff"]
 
 model_inter = sm.OLS(y, X)
-results_inter = model_inter.fit()
-print(results_inter.summary())
+results_inter_h = model_inter.fit()
+print(results_inter_h.summary())
 
 
 # Interaction Africa * GDP 1960
@@ -95,8 +100,12 @@ X = data[["const", "rgdpw60", "diff_i_y", "diff_school", "inter_a_rgdpw60"]]
 y = data["GDP_diff"]
 
 model_inter = sm.OLS(y, X)
-results_inter = model_inter.fit()
-print(results_inter.summary())
+results_inter_gdp = model_inter.fit()
+print(results_inter_gdp.summary())
+
+# Latex Render (Africa, Interaction Human Capital, Interaction GDP)
+stargazer = Stargazer([results_africa, results_inter_h, results_inter_gdp])
+print(stargazer.render_latex())
 
 #%% Playing around
 for col in data.columns:

@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 sns.set_style("darkgrid")
 import statsmodels.api as sm
+from stargazer.stargazer import Stargazer
 
 # WD
 wd = r"C:\Users\alexa\Documents\Studium\MSc (WU)\Topics in Macroeconomic Theory and Policy\Assignment\Topics-in-Macro-Assignment"
@@ -185,8 +186,9 @@ X = df_p1[["const", "GDP_Level"]]
 y = df_p1["GDP_GR"]
 
 model = sm.OLS(y, X)
-results = model.fit()
-print(results.summary())
+results_p1 = model.fit()
+print(results_p1.summary())
+
 
 # Period 2
 df_p2["const"] = 1
@@ -194,8 +196,8 @@ X = df_p2[["const", "GDP_Level"]]
 y = df_p2["GDP_GR"]
 
 model = sm.OLS(y, X)
-results = model.fit()
-print(results.summary())
+results_p2 = model.fit()
+print(results_p2.summary())
 
 # Plots
 # Period 1
@@ -213,6 +215,10 @@ sns.regplot(x=df_p2["GDP_Level"],
 plt.savefig("Uncoditional_Period2.pdf", dpi=500)
 plt.show()
 
+# Latex Render
+stargazer = Stargazer([results_p1, results_p2])
+print(stargazer.render_latex())
+
 # Conditional beta convergence
 # Join DFs
 
@@ -225,8 +231,8 @@ X = df_p1_cond[["const", "GDP_Level", "Pop_Growth", "Inv_Share"]]
 y = df_p1_cond["GDP_GR"]
 
 model = sm.OLS(y, X)
-results = model.fit()
-print(results.summary())
+results_p1_cond = model.fit()
+print(results_p1_cond.summary())
 
 # Plot Period 1
 sns.regplot(x=df_p1_cond["GDP_Level"], 
@@ -245,8 +251,8 @@ X = df_p2_cond[["const", "GDP_Level", "Pop_Growth", "Inv_Share"]]
 y = df_p2_cond["GDP_GR"]
 
 model = sm.OLS(y, X)
-results = model.fit()
-print(results.summary())
+results_p2_cond = model.fit()
+print(results_p2_cond.summary())
 
 # Plot Period 2
 sns.regplot(x=df_p2_cond["GDP_Level"], 
@@ -254,6 +260,10 @@ sns.regplot(x=df_p2_cond["GDP_Level"],
             color="orange").set(title="Period 2 (1990-2019)")
 plt.savefig("Conditional_Period2.pdf", dpi=500)
 plt.show()
+
+# Latex Render
+stargazer = Stargazer([results_p1_cond, results_p2_cond])
+print(stargazer.render_latex())
 
 #%% Playing around
 
